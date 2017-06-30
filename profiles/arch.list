@@ -1,0 +1,12 @@
+amd64
+arm
+arm64
+x86
+
+# Prefix keywords
+amd64-linux
+arm-linux
+arm64-linux
+x86-linux
+x64-cygwin
+x86-cygwin
