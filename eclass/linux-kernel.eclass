@@ -27,7 +27,7 @@ esac
 
 inherit eutils toolchain-funcs multilib versionator
 
-[[ ${ETYPE} == kernel ]] && inherit savedconfig
+[[ ${ETYPE} == "kernel" ]] && inherit savedconfig
 
 EXPORT_FUNCTIONS src_prepare src_configure src_compile src_install pkg_postinst
 
@@ -48,7 +48,7 @@ else
 	"
 fi
 
-if [[ ${ETYPE} == headers ]]; then
+if [[ ${ETYPE} == "headers" ]]; then
 	DESCRIPTION="Linux kernel headers"
 	SLOT="0"
 elif [[ ${ETYPE} == "kernel" ]]; then
@@ -74,7 +74,7 @@ DEPEND="
 	dev-lang/perl
 "
 
-if [[ ${ETYPE} == kernel ]]; then
+if [[ ${ETYPE} == "kernel" ]]; then
 	IUSE+="dracut +firmware +headers +mheaders symlink"
 
 	RDEPEND="
@@ -353,7 +353,7 @@ kernel_pkg_postinst() {
 	savedconfig_pkg_postinst
 
 	if use symlink; then
-		symlink_rm_ln "vmlinuz-${MY_PV}" "${EROOT}boot/vmlinuz-latest"
+		symlink_rm_ln "boot/vmlinuz-${MY_PV}" "${EROOT}vmlinuz"
 
 		# NOTE: We can use 'eselect linux ${MY_PV}' but he add one more / in symlink
 		mkdir -p "${EROOT}usr/src"
@@ -361,18 +361,18 @@ kernel_pkg_postinst() {
 	fi
 
 	if use dracut ; then
-		dracut --force --kmoddir "${EROOT}/${KMDIR}" "${EROOT}boot/initramfs-${MY_PV}" ${MY_PV} \
-			|| die "failed create initramfs image"
+		dracut --force --kmoddir "${KMDIR}" "/boot/initrd-${MY_PV}" ${MY_PV} \
+			|| die "failed create initrd image"
 
-		use symlink && symlink_rm_ln "initramfs-${MY_PV}" "${EROOT}boot/initramfs-latest"
+		use symlink && symlink_rm_ln "boot/initrd-${MY_PV}" "${EROOT}initrd"
 	fi
 
 	einfo
-	einfo "If your need generate initramfs image use sys-kernel/dracut or mkinitcpio tools."
+	einfo "If your need generate initrd image use sys-kernel/dracut."
 	einfo
 	einfo "Run as root 'eselect linux' for switch between available kernel."
 	einfo
-	einfo "Run 'emerge @module-rebuild' for rebuild external drivers with new kernel."
+	einfo "Run 'emerge @module-rebuild' for rebuild external modules with new kernel."
 	einfo
 }
 
@@ -383,26 +383,26 @@ kernel_pkg_postinst() {
 linux-kernel_src_prepare() {
 	eapply_user
 
-	[[ ${ETYPE} == headers ]] && headers_src_prepare
-	[[ ${ETYPE} == kernel ]] && kernel_src_prepare
+	[[ ${ETYPE} == "headers" ]] && headers_src_prepare
+	[[ ${ETYPE} == "kernel" ]] && kernel_src_prepare
 }
 
 linux-kernel_src_configure() {
-	[[ ${ETYPE} == headers ]] && return 0
-	[[ ${ETYPE} == kernel ]] && kernel_src_configure
+	[[ ${ETYPE} == "headers" ]] && return 0
+	[[ ${ETYPE} == "kernel" ]] && kernel_src_configure
 }
 
 linux-kernel_src_compile() {
-	[[ ${ETYPE} == headers ]] && headers_src_compile
-	[[ ${ETYPE} == kernel ]] && kernel_src_compile
+	[[ ${ETYPE} == "headers" ]] && headers_src_compile
+	[[ ${ETYPE} == "kernel" ]] && kernel_src_compile
 }
 
 linux-kernel_src_install() {
-	[[ ${ETYPE} == headers ]] && headers_src_install
-	[[ ${ETYPE} == kernel ]] && kernel_src_install
+	[[ ${ETYPE} == "headers" ]] && headers_src_install
+	[[ ${ETYPE} == "kernel" ]] && kernel_src_install
 }
 
 linux-kernel_pkg_postinst() {
-	[[ ${ETYPE} == headers ]] && return 0
-	[[ ${ETYPE} == kernel ]] && kernel_pkg_postinst
+	[[ ${ETYPE} == "headers" ]] && return 0
+	[[ ${ETYPE} == "kernel" ]] && kernel_pkg_postinst
 }
