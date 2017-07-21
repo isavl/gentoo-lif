@@ -1,0 +1,11 @@
+--- VirtualBox-5.1.24/src/VBox/Additions/linux/drm/Makefile.module.kms	2017-07-17 16:58:30.000000000 +0100
++++ VirtualBox-5.1.24/src/VBox/Additions/linux/drm/Makefile.module.kms	2017-07-19 21:11:05.203606377 +0100
+@@ -50,7 +50,7 @@
+ ifneq ($(KERN_VERSION),24)
+ MOD_CFLAGS += -include $(MANGLING)
+ endif
+-MOD_INCL   = $(addprefix -I$(KBUILD_EXTMOD),/ /include)
++MOD_INCL   = $(addprefix -I$(KBUILD_EXTMOD),/ /include /r0drv/linux)
+ # What on earth is this?
+ MOD_INCL  += $(addprefix -I$(KBUILD_EXTMOD)/vboxvideo,/ /include)
+ MOD_INCL  += -Iinclude/drm
