@@ -78,6 +78,10 @@ if [[ ${ETYPE} == "kernel" ]]; then
 	IUSE+="dracut +firmware +headers +mheaders symlink"
 
 	RDEPEND="
+		sys-apps/kmod
+
+		virtual/libelf
+
 		dracut? ( sys-kernel/dracut )
 
 		firmware? ( sys-kernel/linux-firmware )
@@ -89,8 +93,6 @@ if [[ ${ETYPE} == "kernel" ]]; then
 
 	DEPEND+="${RDEPEND}
 		app-text/xmlto
-
-		sys-apps/kmod
 
 		sys-devel/bc
 		>=sys-devel/gcc-4.9.3
@@ -193,8 +195,7 @@ headers_src_install() {
 kernel_src_prepare() {
 	env_setup_xmakeopts
 
-	if [[ $(get_version_component_count) -gt "2" ]]
-	then
+	if [[ $(get_version_component_count) -gt "2" ]]; then
 		epatch "${WORKDIR}/linux-patch-${PV}"
 	fi
 
@@ -249,7 +250,7 @@ kernel_src_install() {
 	fi
 
 	if use mheaders ; then
-		einfo "Install header files and scripts for building external modules for kernel"
+		einfo "Install header files and scripts for building external modules"
 		rm -rf "${ED}/${KMDIR}/build" || die
 		rm -rf "${ED}/${KMDIR}/source"
 
@@ -265,7 +266,7 @@ kernel_src_install() {
 
 		insinto "${KMDIR}/build/include"
 		for i in acpi asm-generic config crypto drm generated keys linux math-emu \
-			media net pcmcia scsi sound trace uapi video xen ; do
+		    media net pcmcia rdma scsi soc sound trace uapi video xen; do
 			doins -r include/${i}
 		done
 
@@ -277,7 +278,7 @@ kernel_src_install() {
 		insinto "${KMDIR}/build"
 		doins Module.symvers
 
-		# I dnot know how copy with doins and preserve file modes.
+		# I d'not know how copy with doins and preserve file modes.
 		#doins -r scripts
 		cp -a scripts "${ED}/${KMDIR}/build"
 
@@ -311,23 +312,21 @@ kernel_src_install() {
 		insinto "${KMDIR}/build/net/mac80211"
 		doins net/mac80211/*.h
 
-		if [[ $(grep -E "CONFIG_DVB_CORE=(y|m)" .config 2>/dev/null) != "" ]]; then
-			# Add dvb headers for external modules.
-			# In reference to: http://bugs.archlinux.org/task/9912
-			insinto "${KMDIR}/build/drivers/media/dvb-core"
-			doins drivers/media/dvb-core/*.h
-			# and...
-			# http://bugs.archlinux.org/task/11194
-			insinto "${KMDIR}/build/include/config/dvb"
-			doins include/config/dvb/*.h
+		# Add dvb headers for external modules.
+		# In reference to: http://bugs.archlinux.org/task/9912
+		insinto "${KMDIR}/build/drivers/media/dvb-core"
+		doins drivers/media/dvb-core/*.h
+		# and...
+		# http://bugs.archlinux.org/task/11194
+		insinto "${KMDIR}/build/include/config/dvb"
+		doins include/config/dvb/*.h
 
-			# Add dvb headers.
-			# In reference to: http://bugs.archlinux.org/task/20402
-			insinto "${KMDIR}/build/drivers/media/usb/dvb-usb"
-			doins drivers/media/usb/dvb-usb/*.h
-			insinto "${KMDIR}/build/drivers/media/dvb-frontends"
-			doins drivers/media/dvb-frontends/*.h
-		fi
+		# Add dvb headers.
+		# In reference to: http://bugs.archlinux.org/task/20402
+		insinto "${KMDIR}/build/drivers/media/usb/dvb-usb"
+		doins drivers/media/usb/dvb-usb/*.h
+		insinto "${KMDIR}/build/drivers/media/dvb-frontends"
+		doins drivers/media/dvb-frontends/*.h
 
 		insinto "${KMDIR}/build/drivers/media/tuners"
 		doins drivers/media/tuners/*.h
@@ -344,6 +343,13 @@ kernel_src_install() {
 			insinto "${KMDIR}"/build/$(echo ${i} | sed 's|/Kconfig.*||')
 			doins ${i}
 		done
+
+		# Add objtool for external module building and enabled VALIDATION_STACK option.
+		if [[ -f tools/objtool/objtool ]]; then
+			insinto ${KMDIR}/build/tools/objtool
+			doins tools/objtool/objtool
+			fperms 0755 ${KMDIR}/build/tools/objtool/objtool
+		fi
 	fi
 
 	save_config .config
